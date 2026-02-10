@@ -682,9 +682,9 @@ This is a graduation project, but contributions and suggestions are welcome!
 **Serhii Hodis** — Graduation Project 2026
 
 - 📧 Email: [serghod@icloud.com]
-- 💼 LinkedIn: [www.linkedin.com/in/serhii-hodis-410a32395]
+- 💼 LinkedIn: [Serhii Hodis](www.linkedin.com/in/serhii-hodis-410a32395)
 <!-- - 🌐 Portfolio: [yourportfolio.com] -->
-- 🐙 GitHub: [github.com/SerhiiHodis](https://github.com/SerhiiHodis)
+- 🐙 GitHub: [Serhii Hodis](https://github.com/SerhiiHodis)
 
 ---
 
