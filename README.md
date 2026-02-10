@@ -683,8 +683,7 @@ This is a graduation project, but contributions and suggestions are welcome!
 
 - 📧 Email: [serghod@icloud.com]
 - 💼 LinkedIn: [Serhii Hodis](www.linkedin.com/in/serhii-hodis-410a32395)
-<!-- - 🌐 Portfolio: [yourportfolio.com] -->
-- 🐙 GitHub: [Serhii Hodis](https://github.com/SerhiiHodis)
+- 🐙 GitHub: [github.com/SerhiiHodis](https://github.com/SerhiiHodis)
 
 ---
 
