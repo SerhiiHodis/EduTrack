@@ -299,12 +299,6 @@ This is a graduation project, but suggestions are welcome:
 
 ---
 
-## 📄 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
----
-
 ## 👨‍💻 Author
 
 **Graduation Project 2026**
