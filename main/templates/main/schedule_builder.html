@@ -1,0 +1,492 @@
+{% extends "base.html" %}
+{% load journal_filters %}
+
+{% block title %}Конструктор розкладу - EduTrack{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary: #000;
+        --primary-hover: #333;
+        --bg-gray: #f8fafc;
+        --border-color: #000;
+    }
+
+    .builder-container {
+        display: grid;
+        grid-template-columns: 320px 1fr;
+        gap: 2rem;
+        height: calc(100vh - 160px);
+        margin-top: 1rem;
+    }
+
+    .sidebar-panel {
+        background: white;
+        padding: 2rem;
+        border-radius: 0.5rem;
+        border: 2px solid var(--border-color);
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .main-grid-panel {
+        background: white;
+        padding: 2rem;
+        border-radius: 0.5rem;
+        border: 2px solid var(--border-color);
+        overflow-y: auto;
+    }
+
+    .schedule-grid {
+        display: grid;
+        grid-template-columns: 80px repeat(5, 1fr);
+        border: 2px solid var(--border-color);
+        background-color: var(--border-color);
+        gap: 2px;
+    }
+
+    .grid-header {
+        background: #f1f5f9;
+        padding: 1rem;
+        text-align: center;
+        font-weight: 900;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+    }
+
+    .time-cell-header {
+        background: #e2e8f0;
+        padding: 1rem;
+        text-align: center;
+        font-weight: 900;
+        font-size: 0.75rem;
+    }
+
+    .schedule-cell {
+        background: white;
+        min-height: 110px;
+        padding: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        position: relative;
+    }
+
+    .cell-inner {
+        height: 100%;
+        border: 2px dashed #cbd5e1;
+        border-radius: 4px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        padding: 10px;
+        gap: 5px;
+    }
+
+    .schedule-cell:hover .cell-inner {
+        border-color: var(--primary);
+        background: #f0f7ff;
+    }
+
+    .schedule-cell.filled .cell-inner {
+        background-color: #fff;
+        border: 2px solid var(--border-color);
+        border-style: solid;
+    }
+
+    .subject-name {
+        font-weight: 900;
+        font-size: 0.85rem;
+        line-height: 1.2;
+        color: #000;
+    }
+
+    .teacher-name {
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: #444;
+        margin-top: 4px;
+    }
+
+    .time-info {
+        font-size: 0.65rem;
+        font-weight: 800;
+        color: #64748b;
+        margin-top: 4px;
+    }
+
+    /* Modal Styling - Classic High Contrast */
+    .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.7);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        backdrop-filter: blur(4px);
+    }
+
+    .modal-content {
+        background: white;
+        width: 100%;
+        max-width: 500px;
+        border-radius: 0.5rem;
+        overflow: hidden;
+        border: 3px solid #000;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-header {
+        padding: 1.5rem 2rem;
+        border-bottom: 2px solid #000;
+        background: #f8fafc;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .modal-body {
+        padding: 2rem;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 0.75rem;
+        font-weight: 900;
+        color: #000;
+        text-transform: uppercase;
+    }
+
+    .classic-input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 2px solid #000;
+        border-radius: 4px;
+        font-weight: 700;
+        font-family: inherit;
+        font-size: 0.9rem;
+    }
+
+    .btn-classic {
+        padding: 0.75rem 1.5rem;
+        border: 2px solid #000;
+        border-radius: 4px;
+        font-weight: 900;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 0.85rem;
+    }
+
+    .btn-classic.black {
+        background: #000;
+        color: #fff;
+    }
+
+    .btn-classic.black:hover {
+        background: #333;
+    }
+
+    .btn-classic.outline {
+        background: #fff;
+        color: #000;
+    }
+
+    .btn-classic.outline:hover {
+        background: #f1f5f9;
+    }
+
+    #autoSaveStatus {
+        font-weight: 800;
+        font-size: 0.8rem;
+    }
+
+    #autoSaveStatus.saved {
+        color: #059669;
+    }
+
+    #autoSaveStatus.error {
+        color: #dc2626;
+    }
+</style>
+{% endblock %}
+
+{% block header_title %}КОНСТРУКТОР РОЗКЛАДУ{% endblock %}
+
+{% block content %}
+<div class="animate-fade-in">
+    <div class="builder-container">
+        <!-- Sidebar -->
+        <div class="sidebar-panel">
+            <div>
+                <label class="form-label">Оберіть групу</label>
+                <select id="groupSelect" class="classic-input">
+                    <option value="">-- ГРУПА --</option>
+                    {% for g in groups %}
+                    <option value="{{ g.id }}">{{ g.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div id="groupInfo"
+                style="padding: 1.5rem; background: #f8fafc; border: 2px solid #000; border-radius: 4px;">
+                <div id="groupInfoText"
+                    style="display: flex; align-items: center; gap: 10px; font-weight: 900; font-size: 1.1rem; color: #000;">
+                    Оберіть групу для початку
+                </div>
+            </div>
+
+            <div id="autoSaveStatus"></div>
+
+            <div style="margin-top: auto; display: flex; flex-direction: column; gap: 10px;">
+                <button id="saveBtn" class="btn-classic black">ЗБЕРЕГТИ РОЗКЛАД</button>
+                <button id="clearAllBtn" class="btn-classic outline">ОЧИСТИТИ ВСЕ</button>
+            </div>
+        </div>
+
+        <!-- Main Grid -->
+        <div class="main-grid-panel" id="scheduleContainer" style="display: none;">
+            <div class="schedule-grid">
+                <div class="grid-header" style="background: #000; color: #fff;">ПАРА</div>
+                {% for day_id, day_name in days %}
+                <div class="grid-header">{{ day_name }}</div>
+                {% endfor %}
+
+                {% for num in lesson_numbers %}
+                <div class="time-cell-header">
+                    <div style="font-size: 1.2rem; margin-bottom: 4px;">{{ num }}</div>
+                    {% if num == 1 %}08:30{% elif num == 2 %}10:15{% elif num == 3 %}12:15{% elif num == 4 %}14:15{%
+                    elif num == 5 %}16:00{% elif num == 6 %}17:45{% endif %}
+                </div>
+                {% for day_id, day_name in days %}
+                <div class="schedule-cell" data-day="{{ day_id }}" data-lesson="{{ num }}">
+                    <div class="cell-inner">
+                        <div class="subject-name">-</div>
+                        <div class="teacher-name"></div>
+                        <div class="time-info" style="visibility: hidden;"></div>
+                    </div>
+                </div>
+                {% endfor %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal -->
+<div id="subjectModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 style="font-weight: 900; margin: 0; text-transform: uppercase; letter-spacing: 1px;">Редагувати пару
+            </h3>
+            <button class="modal-close"
+                style="background: none; border: none; font-size: 1.5rem; cursor: pointer; font-weight: 900;">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div style="margin-bottom: 1.5rem;">
+                <label class="form-label">Предмет та викладач</label>
+                <select id="modalSubjectSelect" class="classic-input">
+                    <option value="">-- ОБЕРІТЬ ПРЕДМЕТ --</option>
+                    {% for item in subject_data %}
+                    <option value="{{ item.id }}" data-teacher-id="{{ item.teacher_id }}"
+                        data-teacher-name="{{ item.teacher_name }}">
+                        {{ item.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label class="form-label">Аудиторія</label>
+                <input type="text" id="modalClassroom" class="classic-input" placeholder="н-р: 402, Каф. фіз.">
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+                <div>
+                    <label class="form-label">Початок</label>
+                    <input type="time" id="modalStartTime" class="classic-input" value="08:30">
+                </div>
+                <div>
+                    <label class="form-label">Кількість пар підряд</label>
+                    <input type="number" id="modalLessonCount" class="classic-input" value="1" min="1" max="6">
+                </div>
+            </div>
+
+            <input type="hidden" id="modalDuration" value="90">
+        </div>
+        <div
+            style="padding: 1.5rem 2rem; border-top: 2px solid #000; background: #f8fafc; display: flex; justify-content: flex-end; gap: 1rem;">
+            <button class="btn-classic outline modal-cancel">СКАСУВАТИ</button>
+            <button class="btn-classic black modal-confirm">ОК</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const elements = {
+            groupSelect: document.getElementById('groupSelect'),
+            scheduleContainer: document.getElementById('scheduleContainer'),
+            subjectModal: document.getElementById('subjectModal'),
+            modalSubjectSelect: document.getElementById('modalSubjectSelect'),
+            modalLessonCount: document.getElementById('modalLessonCount'),
+            modalStartTime: document.getElementById('modalStartTime'),
+            modalClassroom: document.getElementById('modalClassroom'),
+            saveBtn: document.getElementById('saveBtn'),
+            autoSaveStatus: document.getElementById('autoSaveStatus'),
+            groupInfoText: document.getElementById('groupInfoText')
+        };
+
+        const config = {
+            times: { 1: "08:30", 2: "10:15", 3: "12:15", 4: "14:15", 5: "16:00", 6: "17:45" }
+        };
+
+        let state = {
+            currentGroup: null,
+            schedule: {},
+            selectedCell: null,
+            modified: false
+        };
+
+        elements.groupSelect.addEventListener('change', function () {
+            state.currentGroup = this.value;
+            if (state.currentGroup) {
+                loadSchedule(state.currentGroup);
+                elements.scheduleContainer.style.display = 'block';
+                elements.groupInfoText.textContent = `Група: ${this.options[this.selectedIndex].text}`;
+                state.modified = false;
+            } else {
+                elements.scheduleContainer.style.display = 'none';
+            }
+        });
+
+        document.querySelectorAll('.schedule-cell').forEach(cell => {
+            cell.addEventListener('click', function () {
+                state.selectedCell = this;
+                const lesson = this.dataset.lesson;
+                elements.modalStartTime.value = config.times[lesson] || "08:30";
+
+                const currentData = state.schedule[this.dataset.day]?.[lesson];
+                if (currentData) {
+                    elements.modalSubjectSelect.value = currentData.subject_id || currentData.subjectId || "";
+                    elements.modalClassroom.value = currentData.classroom || "";
+                } else {
+                    elements.modalSubjectSelect.value = "";
+                    elements.modalClassroom.value = "";
+                }
+
+                elements.subjectModal.style.display = 'flex';
+            });
+        });
+
+        const closeModal = () => elements.subjectModal.style.display = 'none';
+        document.querySelectorAll('.modal-cancel, .modal-close').forEach(b => b.addEventListener('click', closeModal));
+
+        document.querySelector('.modal-confirm').addEventListener('click', function () {
+            if (!state.selectedCell) return;
+
+            const day = state.selectedCell.dataset.day;
+            const startLesson = parseInt(state.selectedCell.dataset.lesson);
+            const count = parseInt(elements.modalLessonCount.value) || 1;
+            const subjectId = elements.modalSubjectSelect.value;
+            const option = elements.modalSubjectSelect.options[elements.modalSubjectSelect.selectedIndex];
+
+            if (!subjectId) return;
+
+            const subjectName = option.text.split(' (')[0];
+            const teacherId = option.dataset.teacherId;
+            const teacherName = option.dataset.teacherName || '';
+            const classroom = elements.modalClassroom.value;
+
+            if (!state.schedule[day]) state.schedule[day] = {};
+
+            for (let i = 0; i < count; i++) {
+                const lesson = startLesson + i;
+                if (lesson > 6) break;
+
+                const currentStartTime = config.times[lesson] || elements.modalStartTime.value;
+
+                state.schedule[day][lesson] = {
+                    subjectId: parseInt(subjectId),
+                    teacherId: teacherId ? parseInt(teacherId) : null,
+                    subjectName: subjectName,
+                    teacherName: teacherName,
+                    startTime: currentStartTime,
+                    duration: 90,
+                    classroom: classroom
+                };
+
+                const cell = document.querySelector(`[data-day="${day}"][data-lesson="${lesson}"]`);
+                if (cell) {
+                    cell.classList.add('filled');
+                    cell.querySelector('.subject-name').textContent = subjectName;
+                    cell.querySelector('.teacher-name').textContent = (classroom ? '[' + classroom + '] ' : '') + teacherName;
+                    cell.querySelector('.time-info').textContent = currentStartTime;
+                }
+            }
+
+            state.modified = true;
+            closeModal();
+            elements.autoSaveStatus.innerHTML = '● Є незбережені зміни';
+            elements.autoSaveStatus.className = 'error';
+        });
+
+        elements.saveBtn.addEventListener('click', function () {
+            if (!state.currentGroup || !state.modified) return;
+
+            elements.autoSaveStatus.textContent = 'Збереження...';
+            elements.autoSaveStatus.className = 'saving';
+
+            fetch('{% url "save_schedule" %}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                body: JSON.stringify({ group_id: parseInt(state.currentGroup), schedule: state.schedule })
+            })
+                .then(r => r.json())
+                .then(res => {
+                    if (res.status === 'success') {
+                        state.modified = false;
+                        elements.autoSaveStatus.innerHTML = '✓ Збережено успішно!';
+                        elements.autoSaveStatus.className = 'saved';
+                    }
+                });
+        });
+
+        function loadSchedule(groupId) {
+            document.querySelectorAll('.schedule-cell').forEach(c => {
+                c.classList.remove('filled');
+                c.querySelector('.subject-name').textContent = '-';
+                c.querySelector('.teacher-name').textContent = '';
+                c.querySelector('.time-info').textContent = '';
+            });
+
+            const dataEl = document.getElementById('schedule-data');
+            if (!dataEl) return;
+            const rawData = JSON.parse(dataEl.textContent);
+            state.schedule = rawData[groupId] || {};
+
+            Object.keys(state.schedule).forEach(day => {
+                const dayObj = state.schedule[day];
+                Object.keys(dayObj).forEach(lesson => {
+                    const item = dayObj[lesson];
+                    const cell = document.querySelector(`[data-day="${day}"][data-lesson="${lesson}"]`);
+                    if (cell) {
+                        cell.classList.add('filled');
+                        cell.querySelector('.subject-name').textContent = item.subject_name || item.subjectId;
+                        const teacher = item.teacher_name || '';
+                        const classroom = item.classroom || '';
+                        cell.querySelector('.teacher-name').textContent = (classroom ? '[' + classroom + '] ' : '') + teacher;
+                        cell.querySelector('.time-info').textContent = item.start_time || '';
+                    }
+                });
+            });
+        }
+    });
+</script>
+
+{{ schedule_map|json_script:"schedule-data" }}
+{% endblock %}

@@ -1,0 +1,57 @@
+# Core Framework
+Django==5.2.7
+
+# Database Drivers
+mysql-connector-python==9.1.0
+# Alternative: mysqlclient==2.2.0 (faster, but requires C compiler)
+# Alternative: PyMySQL==1.1.0 (pure Python)
+
+# PostgreSQL support (optional, uncomment if using PostgreSQL)
+# psycopg2-binary==2.9.9
+
+# Environment Variables
+python-dotenv==1.0.0
+
+# Security & Authentication
+django-environ==0.11.2
+
+# Data Visualization (for Chart.js integration)
+# Note: Chart.js is client-side, no Python package needed
+
+# Development Tools (optional, for development only)
+# django-debug-toolbar==4.2.0
+# ipython==8.18.1
+
+# Production Server
+gunicorn==21.2.0
+
+# Static Files (Production)
+whitenoise==6.6.0
+
+# Timezone Support
+pytz==2024.1
+
+# Testing
+# pytest==7.4.3
+# pytest-django==4.7.0
+# coverage==7.3.2
+
+# Code Quality (optional)
+# flake8==6.1.0
+# black==23.12.1
+# isort==5.13.2
+
+# API Development (future enhancement)
+# djangorestframework==3.14.0
+# django-cors-headers==4.3.1
+
+# Caching (optional)
+# redis==5.0.1
+# django-redis==5.4.0
+
+# Monitoring (optional)
+# sentry-sdk==1.39.1
+
+# Excel/CSV Export Enhancement (optional)
+# openpyxl==3.1.2
+# pandas==2.1.4
